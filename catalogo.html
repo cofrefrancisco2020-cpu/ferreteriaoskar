@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="es-CL">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101f35">
+  <meta name="description" content="Explora el catálogo de Ferretería Oskar por categoría, producto y medida. Más de mil referencias de herramientas, fijaciones, materiales y accesorios en Concepción.">
+  <title>Catálogo de productos | Ferretería Oskar</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./catalogo.css">
+  <script src="./catalogo-data.js" defer></script>
+  <script src="./catalogo.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#contenido">Ir al contenido</a>
+  <div class="topline"><span>FERRETERÍA EN CONCEPCIÓN</span><a href="https://www.google.com/maps/search/?api=1&amp;query=Tucapel+1039%2C+Concepci%C3%B3n%2C+Chile" target="_blank" rel="noopener noreferrer">Tucapel 1039 · Cómo llegar ↗</a></div>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="./index.html" aria-label="Ferretería Oskar, ir al inicio"><span class="brand-small">FERRETERÍA</span><span class="brand-main">OSKAR<span class="brand-dot">.</span></span></a>
+      <nav class="main-nav" aria-label="Navegación principal"><a href="./index.html">Inicio</a><a href="./catalogo.html" aria-current="page">Catálogo</a><a href="./index.html#ubicacion">Ubicación</a><a class="nav-quote" href="https://wa.me/message/2P2UND3ZVHTUI1" target="_blank" rel="noopener noreferrer">Consultar por WhatsApp ↗</a></nav>
+    </div>
+  </header>
+
+  <main id="contenido">
+    <section class="catalog-hero">
+      <div class="container hero-grid">
+        <div><p class="eyebrow"><span class="dash"></span> CATÁLOGO OSKAR / CONCEPCIÓN</p><h1>Encuentra lo que <em>necesitas.</em></h1><p class="hero-lede">Busca por producto, marca o medida. Reunimos las variantes de cada artículo en un solo lugar para que explores con claridad.</p><a class="hero-link" href="#explorar">Explorar productos <span aria-hidden="true">↓</span></a></div>
+        <div class="hero-stat" aria-label="Más de mil referencias ordenadas por familias"><span>EL CATÁLOGO</span><strong id="hero-count">1.126</strong><small>referencias organizadas para tu proyecto</small><div class="hero-lines" aria-hidden="true"><i></i><i></i><i></i><i></i></div></div>
+      </div>
+    </section>
+
+    <section class="catalog-section" id="explorar">
+      <div class="container">
+        <div class="section-heading"><p class="eyebrow blue">01 / EXPLORA</p><h2>Un camino claro <span>hasta cada medida.</span></h2><p>Elige una categoría o escribe lo que buscas. Abre una familia para ver sus modelos y medidas con la descripción del listado.</p></div>
+        <form class="search-box" role="search" id="catalog-search-form"><label for="catalog-search">Buscar en el catálogo</label><div class="search-field"><span aria-hidden="true">⌕</span><input id="catalog-search" type="search" autocomplete="off" placeholder="Ej.: tornillo CRS, broca 8 mm, alicate..." aria-describedby="search-help"><button type="button" id="clear-search" aria-label="Borrar búsqueda" hidden>×</button></div><small id="search-help">Busca también dentro de las medidas y descripciones de cada producto.</small></form>
+        <div class="category-head"><h3>Categorías</h3><button class="plain-button" id="show-all" type="button">Ver todas ↗</button></div>
+        <div class="category-grid" id="category-grid" aria-label="Categorías del catálogo"></div>
+        <div class="results-head"><div><p class="eyebrow blue">02 / RESULTADOS</p><h2 id="results-title">Todas las familias</h2><p id="results-summary" role="status" aria-live="polite"></p></div><div class="results-actions"><button class="plain-button" id="reset-filters" type="button" hidden>Limpiar filtros ×</button><label for="sort-select">Ordenar</label><select id="sort-select"><option value="relevance">Vista inicial</option><option value="az">Nombre A–Z</option><option value="variants">Más medidas</option></select></div></div>
+        <div class="subcategory-list" id="subcategory-list" aria-label="Subcategorías" hidden></div>
+        <div class="family-grid" id="family-grid"></div>
+        <div class="empty-state" id="empty-state" hidden><strong>No encontramos esa búsqueda.</strong><p>Prueba con un nombre más general o revisa las categorías.</p><button class="button dark" id="empty-reset" type="button">Ver todo el catálogo</button></div>
+        <div class="load-wrap"><button class="button dark" id="load-more" type="button" hidden>Ver más familias <span aria-hidden="true">↓</span></button></div>
+      </div>
+    </section>
+
+    <section class="help-band"><div class="container help-grid"><div><p class="eyebrow">¿BUSCAS ALGO ESPECÍFICO?</p><h2>La medida correcta<br><em>se conversa.</em></h2><p>El listado es una guía para explorar. Escríbenos para confirmar disponibilidad, características y alternativas antes de venir.</p></div><div class="help-actions"><a class="button yellow" href="https://wa.me/message/2P2UND3ZVHTUI1" target="_blank" rel="noopener noreferrer">Hablar por WhatsApp ↗</a><a class="button outline" href="./index.html#ubicacion">Ver ubicación ↗</a></div></div></section>
+  </main>
+
+  <footer class="footer"><div class="container footer-inner"><a class="brand" href="./index.html"><span class="brand-small">FERRETERÍA</span><span class="brand-main">OSKAR<span class="brand-dot">.</span></span></a><p>Tucapel 1039 · Concepción, Chile</p><div><a href="./index.html">Inicio</a><a href="https://web.facebook.com/profile.php?id=61592324474626" target="_blank" rel="noopener noreferrer">Facebook ↗</a><a href="https://wa.me/message/2P2UND3ZVHTUI1" target="_blank" rel="noopener noreferrer">WhatsApp ↗</a></div></div></footer>
+
+  <dialog id="family-dialog" class="family-dialog" aria-labelledby="dialog-family-name"><div class="dialog-shell"><div class="dialog-top"><span>DETALLE DE FAMILIA</span><button id="close-dialog" type="button" aria-label="Cerrar detalle">×</button></div><div class="dialog-intro"><div class="dialog-image" id="dialog-image"></div><div><p class="eyebrow blue" id="dialog-category"></p><h2 id="dialog-family-name"></h2><p id="dialog-description"></p><span class="variant-total" id="dialog-variant-total"></span></div></div><div class="variant-header"><h3>Modelos y medidas</h3><label for="variant-search">Filtrar en esta familia</label><input id="variant-search" type="search" placeholder="Busca una medida o marca"></div><div class="variant-list" id="variant-list"></div><div class="dialog-bottom"><span>La disponibilidad y el precio se confirman al consultar.</span><a class="button yellow" href="https://wa.me/message/2P2UND3ZVHTUI1" target="_blank" rel="noopener noreferrer">Abrir WhatsApp ↗</a></div></div></dialog>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+</body>
+</html>
