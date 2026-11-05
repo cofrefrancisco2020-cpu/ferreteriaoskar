@@ -1,0 +1,10 @@
+.sprite-image{display:block;background-repeat:no-repeat;background-size:400% 400%;background-color:#fff}
+.family-visual .sprite-image{width:100%;height:100%}
+.dialog-image .sprite-image{width:100%;height:100%}
+.variant-photo .sprite-image{display:block;width:148px;height:128px}
+.category-images .sprite-image{position:absolute;width:75px;height:75px;filter:drop-shadow(0 3px 5px #10203624)}
+.category-images .sprite-image:nth-child(1){right:3px;top:5px;transform:rotate(-8deg)}
+.category-images .sprite-image:nth-child(2){right:56px;top:48px;transform:rotate(11deg)}
+.category-images .sprite-image:nth-child(3){right:0;bottom:-10px;transform:rotate(18deg)}
+.category-card.active .category-images .sprite-image{opacity:.25}
+@media(max-width:440px){.variant-photo .sprite-image{width:100%;height:185px}.category-images .sprite-image{width:58px;height:58px}.category-images .sprite-image:nth-child(2){right:36px;top:52px}}

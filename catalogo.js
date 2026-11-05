@@ -16,7 +16,22 @@
   const searchable = new Map(families.map(f => [f.id, familyText(f)]));
   const countItems = list => list.reduce((sum, f) => sum + f.items.length, 0);
   const cats = categoryOrder.filter(cat => families.some(f => f.category === cat));
-  const categoryArt = { 'Soldadura': './assets/categorias/soldadura.png', 'Agua y jardín': './assets/categorias/agua-y-jardin.png' };
+  const categoryVisuals = {
+    'Herramientas manuales': ['./assets/catalogo-ai/alicate-pretul.webp', './assets/catalogo-ai/remachadora-makawa.webp', './assets/catalogo-ai/cuchillo-pretul.webp'],
+    'Herramientas eléctricas': ['./assets/catalogo-ai/taladro-total.webp', './assets/catalogo-ai/rotomartillo-total.webp', './assets/catalogo-ai/sierra-circular-dewalt.webp'],
+    'Fijaciones y herrajes': ['./assets/catalogo-ai/tornillo-crs.webp', './assets/catalogo-ai/perno-expansion.webp', './assets/catalogo-ai/tirafondo.webp'],
+    'Brocas y perforación': ['./assets/catalogo-ai/broca-sds-plus.webp', './assets/catalogo-ai/sierra-copa-metal.webp', './assets/catalogo-ai/brocas-madera-kamasa.webp'],
+    'Discos y corte': ['./assets/categorias/disco-delta-marca.webp', './assets/categorias/disco-rolack-marca.webp', './assets/categorias/disco-delta-inox.webp'],
+    'Construcción y obra': ['./assets/categorias/construccion-obra.webp'],
+    'Electricidad': ['./assets/catalogo-ai/tomacorriente-referencia-v2.webp', './assets/catalogo-ai/interruptor-referencia-v2.webp', './assets/catalogo-ai/extension-electrica-referencia-v2.webp'],
+    'Soldadura': ['./assets/categorias/soldadura.webp'],
+    'Pinturas y terminaciones': ['./assets/categorias/pinturas-terminaciones-v2.webp'],
+    'Adhesivos y selladores': ['./assets/categorias/sellador-wurth-marca.webp', './assets/categorias/sellador-sellotec-marca.webp'],
+    'Cerrajería': ['./assets/categorias/cerrajeria.webp'],
+    'Agua y jardín': ['./assets/categorias/agua-y-jardin.webp'],
+    'Seguridad y EPP': ['./assets/categorias/seguridad-epp.webp'],
+    'Hogar y varios': ['./assets/categorias/hogar-varios.webp']
+  };
   const brandLogos = {
     'TOTAL': 'total.png', 'TRUPER': 'truper.svg', 'PRETUL': 'pretul.svg',
     'DEWALT': 'dewalt.png', 'SATA': 'sata.svg', 'BOSCH': 'bosch.svg',
@@ -24,11 +39,16 @@
     'HUA NAN': 'hua-nan.png', 'WURTH': 'wurth.svg', 'ROLACK': 'rolack.png',
     'FERRETOOLS': 'ferretools.webp', 'DIAGER': 'diager.webp', 'DELTA': 'delta.jpg',
     'WESCO': 'wesco.png', 'SELLOTEC': 'sellotec.jpg', 'ASAKI': 'asaki.webp',
-    'TORO NEGRO': 'toro-negro.webp', 'W-MAX': 'w-max.webp'
+    'TORO NEGRO': 'toro-negro.webp', 'W-MAX': 'w-max.webp',
+    'NEXXO': 'nexxo.webp', 'AKFIX': 'akfix.webp', 'NEVA': 'neva.webp',
+    'WAMAX': 'w-max.webp'
   };
-  const brandMark = (brand, className = 'brand-badge') => brand && brandLogos[brand]
+  const brandMark = (brand, className = 'brand-badge') => !brand ? '' : brandLogos[brand]
     ? `<span class="${className}" data-brand="${esc(brand)}"><img src="./assets/marcas/${brandLogos[brand]}" alt="Logo ${esc(brand)}" loading="lazy"></span>`
-    : '';
+    : `<span class="${className} brand-wordmark" data-brand="${esc(brand)}" aria-label="Marca ${esc(brand)}">${esc(brand)}</span>`;
+  const productImage = (image, sprite, alt, lazy = true) => sprite
+    ? `<span class="sprite-image" role="img" aria-label="${esc(alt)}" style="background-image:url('${esc(image)}');background-position:${sprite[0] * 100 / 3}% ${sprite[1] * 100 / 3}%"></span>`
+    : `<img src="${esc(image)}" alt="${esc(alt)}"${lazy ? ' loading="lazy"' : ''}>`;
   const displayName = item => {
     if (!item.brand || !brandLogos[item.brand]) return item.name;
     const escapedBrand = item.brand.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -46,7 +66,7 @@
     $('category-grid').innerHTML = cats.map((cat, index) => {
       const list = families.filter(f => f.category === cat);
       const active = state.category === cat;
-      const photos = list.filter(f => f.image).sort((a,b) => Number(b.image.includes('/catalogo-ai/')) - Number(a.image.includes('/catalogo-ai/'))).slice(0,3).map(f => `<img src="${esc(f.image)}" alt="" loading="lazy">`).join('') || (categoryArt[cat] ? `<img src="${esc(categoryArt[cat])}" alt="" loading="lazy">` : '');
+      const photos = (categoryVisuals[cat] || []).map(file => `<img src="${esc(file)}" alt="" loading="lazy">`).join('');
       return `<button class="category-card${active ? ' active' : ''}" type="button" data-category="${esc(cat)}" aria-pressed="${active}"><span class="category-images" aria-hidden="true">${photos}</span><span class="cat-index">${String(index + 1).padStart(2,'0')}</span><span class="cat-arrow" aria-hidden="true">↗</span><strong>${esc(cat)}</strong><small>${plural(countItems(list), 'referencia', 'referencias')} · ${plural(list.length, 'familia', 'familias')}</small></button>`;
     }).join('');
   }
@@ -76,8 +96,8 @@
   }
   function visual(f) {
     const unanimousBrand = f.items.length && f.items.every(item => item.brand && item.brand === f.items[0].brand) ? f.items[0].brand : '';
-    const logo = brandMark(f.imageBrand || unanimousBrand);
-    if (f.image) return `<div class="family-visual"><img src="${esc(f.image)}" alt="Imagen de ${esc(f.name)}" loading="lazy">${logo}<span class="photo-kind">${esc(f.imageKind || 'Imagen referencial')}</span></div>`;
+    const logo = brandMark(unanimousBrand && (!f.imageBrand || f.imageBrand === unanimousBrand) ? unanimousBrand : '');
+    if (f.image) return `<div class="family-visual">${productImage(f.image, f.sprite, `Imagen de ${f.name}`)}${logo}<span class="photo-kind" title="${esc(f.imageKind || 'Imagen referencial')}">Imagen referencial</span></div>`;
     return `<div class="family-visual no-photo"><span aria-hidden="true">${esc(f.name.charAt(0))}</span>${logo}</div>`;
   }
   function card(f) {
@@ -110,8 +130,8 @@
     const terms = plain($('variant-search').value).split(' ').filter(Boolean);
     const list = f.items.filter(i => terms.every(t => plain(i.name + ' ' + i.description).includes(t)));
     $('variant-list').innerHTML = list.length ? list.map(item => {
-      const safeFamilyImage = f.image && (!item.brand || !f.imageBrand || item.brand === f.imageBrand);
-      const illustration = item.image ? `<figure class="variant-photo"><img src="${esc(item.image)}" alt="${esc(item.name)}" loading="lazy">${brandMark(item.brand)}<figcaption>${esc(item.imageKind || 'Imagen referencial')}</figcaption></figure>` : safeFamilyImage ? `<figure class="variant-photo"><img src="${esc(f.image)}" alt="Imagen de la familia ${esc(f.name)}" loading="lazy">${brandMark(item.brand)}<figcaption>Imagen de la familia; esta variante puede ser diferente</figcaption></figure>` : '';
+      const safeFamilyImage = f.image && (!f.imageBrand || item.brand === f.imageBrand);
+      const illustration = item.image ? `<figure class="variant-photo">${productImage(item.image, item.sprite, item.name)}${brandMark(item.brand)}<figcaption>${esc(item.imageKind || 'Imagen referencial')}</figcaption></figure>` : safeFamilyImage ? `<figure class="variant-photo">${productImage(f.image, f.sprite, `Imagen de la familia ${f.name}`)}${f.imageBrand === item.brand ? brandMark(item.brand) : ''}<figcaption>Imagen referencial; el modelo puede ser diferente</figcaption></figure>` : '';
       return `<details><summary><span>${esc(displayName(item))}</span>${brandMark(item.brand, 'variant-brand')}</summary><div class="variant-detail">${illustration}<div><p>${esc(item.description || 'Consulta las características de esta variante.')}</p><button class="copy-variant" type="button" data-variant="${f.items.indexOf(item)}">Copiar consulta ↗</button></div></div></details>`;
     }).join('') : '<div class="variant-empty">No hay medidas o modelos que coincidan en esta familia.</div>';
   }
@@ -123,7 +143,8 @@
     $('dialog-category').textContent = `${f.category} / ${f.subcategory}`;
     $('dialog-description').textContent = f.items.length === 1 ? f.description : `Explora las ${f.items.length} variantes de esta familia. Abre cada modelo o medida para leer su descripción.`;
     $('dialog-variant-total').textContent = plural(f.items.length, 'referencia disponible en el listado', 'referencias disponibles en el listado');
-    $('dialog-image').innerHTML = f.image ? `<img src="${esc(f.image)}" alt="Imagen de ${esc(f.name)}">${brandMark(f.imageBrand)}` : `<span class="placeholder" aria-hidden="true">${esc(f.name.charAt(0))}</span>`;
+    const unanimousBrand = f.items.length && f.items.every(item => item.brand && item.brand === f.items[0].brand) ? f.items[0].brand : '';
+    $('dialog-image').innerHTML = f.image ? `${productImage(f.image, f.sprite, `Imagen de ${f.name}`, false)}${brandMark(unanimousBrand && (!f.imageBrand || f.imageBrand === unanimousBrand) ? unanimousBrand : '')}` : `<span class="placeholder" aria-hidden="true">${esc(f.name.charAt(0))}</span>`;
     $('variant-search').value = '';
     renderVariants();
     $('family-dialog').showModal();
