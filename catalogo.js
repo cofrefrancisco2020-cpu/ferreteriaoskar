@@ -9,10 +9,11 @@
   const families = data.families;
   const state = { category: '', subcategory: '', query: '', sort: 'relevance', limit: 24, current: null };
   const categoryOrder = ['Herramientas manuales','Herramientas eléctricas','Fijaciones y herrajes','Brocas y perforación','Discos y corte','Construcción y obra','Electricidad','Soldadura','Pinturas y terminaciones','Adhesivos y selladores','Cerrajería','Agua y jardín','Seguridad y EPP','Hogar y varios'];
+  const categoryLabel = cat => cat === 'Herramientas eléctricas' ? 'Herramientas eléctricas e inalámbricas' : cat;
   const plain = value => String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
   const esc = value => String(value || '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
   const plural = (n, singular, multiple) => `${n.toLocaleString('es-CL')} ${n === 1 ? singular : multiple}`;
-  const familyText = f => plain([f.name, f.category, f.subcategory, ...f.items.flatMap(i => [i.name, i.description])].join(' '));
+  const familyText = f => plain([f.name, categoryLabel(f.category), f.subcategory, ...f.items.flatMap(i => [i.name, i.description])].join(' '));
   const searchable = new Map(families.map(f => [f.id, familyText(f)]));
   const countItems = list => list.reduce((sum, f) => sum + f.items.length, 0);
   const cats = categoryOrder.filter(cat => families.some(f => f.category === cat));
@@ -41,6 +42,7 @@
     'WESCO': 'wesco.png', 'SELLOTEC': 'sellotec.jpg', 'ASAKI': 'asaki.webp',
     'TORO NEGRO': 'toro-negro.webp', 'W-MAX': 'w-max.webp',
     'NEXXO': 'nexxo.webp', 'AKFIX': 'akfix.webp', 'NEVA': 'neva.webp',
+    'STANLEY': 'stanley.webp',
     'WAMAX': 'w-max.webp'
   };
   const brandMark = (brand, className = 'brand-badge') => !brand ? '' : brandLogos[brand]
@@ -50,7 +52,7 @@
     ? `<span class="sprite-image" role="img" aria-label="${esc(alt)}" style="background-image:url('${esc(image)}');background-position:${sprite[0] * 100 / 3}% ${sprite[1] * 100 / 3}%"></span>`
     : `<img src="${esc(image)}" alt="${esc(alt)}"${lazy ? ' loading="lazy"' : ''}>`;
   const displayName = item => {
-    if (!item.brand || !brandLogos[item.brand]) return item.name;
+    if (!item.brand) return item.name;
     const escapedBrand = item.brand.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     return item.name.replace(new RegExp(`\\b${escapedBrand}\\b`, 'gi'), '').replace(/\s{2,}/g, ' ').replace(/\s+([,;.)])/g, '$1').replace(/[-–|]\s*$/, '').trim() || item.name;
   };
@@ -67,7 +69,7 @@
       const list = families.filter(f => f.category === cat);
       const active = state.category === cat;
       const photos = (categoryVisuals[cat] || []).map(file => `<img src="${esc(file)}" alt="" loading="lazy">`).join('');
-      return `<button class="category-card${active ? ' active' : ''}" type="button" data-category="${esc(cat)}" aria-pressed="${active}"><span class="category-images" aria-hidden="true">${photos}</span><span class="cat-index">${String(index + 1).padStart(2,'0')}</span><span class="cat-arrow" aria-hidden="true">↗</span><strong>${esc(cat)}</strong><small>${plural(countItems(list), 'referencia', 'referencias')} · ${plural(list.length, 'familia', 'familias')}</small></button>`;
+      return `<button class="category-card${active ? ' active' : ''}" type="button" data-category="${esc(cat)}" aria-pressed="${active}"><span class="category-images" aria-hidden="true">${photos}</span><span class="cat-index">${String(index + 1).padStart(2,'0')}</span><span class="cat-arrow" aria-hidden="true">↗</span><strong>${esc(categoryLabel(cat))}</strong><small>${plural(countItems(list), 'referencia', 'referencias')} · ${plural(list.length, 'familia', 'familias')}</small></button>`;
     }).join('');
   }
   function makeSubcategories() {
@@ -103,14 +105,14 @@
   function card(f) {
     const matching = state.query ? f.items.filter(i => plain([i.name,i.description].join(' ')).includes(plain(state.query))).slice(0,2) : [];
     const subtitle = matching.length ? matching.map(displayName).join(' · ') : f.items.length === 1 ? f.description : `Explora las ${f.items.length} variantes de esta familia y consulta sus medidas y características.`;
-    return `<article class="family-card">${visual(f)}<div class="family-body"><small>${esc(f.category)}</small><h3>${esc(f.name)}</h3><p>${esc(subtitle)}</p><div class="family-bottom"><span>${plural(f.items.length, 'modelo o medida', 'modelos y medidas')}</span><span aria-hidden="true">↗</span></div></div><button type="button" class="family-open" data-family="${esc(f.id)}" aria-label="Ver modelos y medidas de ${esc(f.name)}">Ver detalle</button></article>`;
+    return `<article class="family-card">${visual(f)}<div class="family-body"><small>${esc(categoryLabel(f.category))}</small><h3>${esc(f.name)}</h3><p>${esc(subtitle)}</p><div class="family-bottom"><span>${plural(f.items.length, 'modelo o medida', 'modelos y medidas')}</span><span aria-hidden="true">↗</span></div></div><button type="button" class="family-open" data-family="${esc(f.id)}" aria-label="Ver modelos y medidas de ${esc(f.name)}">Ver detalle</button></article>`;
   }
   function render() {
     makeCategoryCards();
     makeSubcategories();
     const list = matchingFamilies();
     const visible = list.slice(0, state.limit);
-    $('results-title').textContent = state.category || 'Todas las familias';
+    $('results-title').textContent = state.category ? categoryLabel(state.category) : 'Todas las familias';
     $('results-summary').textContent = `${plural(list.length,'familia','familias')} · ${plural(countItems(list),'referencia','referencias')}` + (state.query ? ` para “${state.query}”` : '');
     $('family-grid').innerHTML = visible.map(card).join('');
     $('empty-state').hidden = list.length !== 0;
@@ -140,7 +142,7 @@
     if (!f) return;
     state.current = f;
     $('dialog-family-name').textContent = f.name;
-    $('dialog-category').textContent = `${f.category} / ${f.subcategory}`;
+    $('dialog-category').textContent = `${categoryLabel(f.category)} / ${f.subcategory}`;
     $('dialog-description').textContent = f.items.length === 1 ? f.description : `Explora las ${f.items.length} variantes de esta familia. Abre cada modelo o medida para leer su descripción.`;
     $('dialog-variant-total').textContent = plural(f.items.length, 'referencia disponible en el listado', 'referencias disponibles en el listado');
     const unanimousBrand = f.items.length && f.items.every(item => item.brand && item.brand === f.items[0].brand) ? f.items[0].brand : '';
