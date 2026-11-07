@@ -7,6 +7,22 @@
   }
   const $ = id => document.getElementById(id);
   const families = data.families;
+  const familyById = new Map(families.map(f => [f.id, f]));
+  const cartStorageKey = 'oskar-consulta-v1';
+  const businessWhatsapp = '56988185541';
+  const cart = new Map();
+  const cartId = (familyId, index) => `${familyId}::${index}`;
+  try {
+    const saved = JSON.parse(localStorage.getItem(cartStorageKey) || '[]');
+    if (Array.isArray(saved)) saved.forEach(entry => {
+      const f = familyById.get(entry.familyId);
+      const index = Number(entry.index);
+      const quantity = Number(entry.quantity);
+      if (f && Number.isInteger(index) && f.items[index] && Number.isInteger(quantity) && quantity > 0) {
+        cart.set(cartId(f.id, index), {familyId:f.id, index, quantity:Math.min(quantity, 99)});
+      }
+    });
+  } catch { /* La lista sigue funcionando si el almacenamiento local está desactivado. */ }
   const state = { category: '', subcategory: '', query: '', sort: 'relevance', limit: 24, current: null };
   const categoryOrder = ['Herramientas manuales','Herramientas eléctricas','Fijaciones y herrajes','Brocas y perforación','Discos y corte','Construcción y obra','Electricidad','Soldadura','Pinturas y terminaciones','Adhesivos y selladores','Cerrajería','Agua y jardín','Seguridad y EPP','Hogar y varios'];
   const categoryLabel = cat => cat === 'Herramientas eléctricas' ? 'Herramientas eléctricas e inalámbricas' : cat;
@@ -63,6 +79,46 @@
     $('toast').classList.add('show');
     clearTimeout(toastTimer);
     toastTimer = setTimeout(() => $('toast').classList.remove('show'), 3600);
+  }
+  function cartProducts() {
+    return [...cart].map(([key, entry]) => ({key, entry, family:familyById.get(entry.familyId)})).filter(row => row.family?.items[row.entry.index]);
+  }
+  function saveCart() {
+    try { localStorage.setItem(cartStorageKey, JSON.stringify([...cart.values()])); }
+    catch { /* La consulta se conserva durante esta visita. */ }
+  }
+  function renderCart() {
+    const rows = cartProducts();
+    const units = rows.reduce((total, row) => total + row.entry.quantity, 0);
+    $('cart-count').textContent = units;
+    $('dialog-cart-count').textContent = units;
+    $('open-cart').setAttribute('aria-label', `Ver mi lista de consulta, ${plural(units, 'producto', 'productos')}`);
+    $('cart-summary').textContent = `${plural(rows.length, 'producto', 'productos')} · ${plural(units, 'unidad', 'unidades')}`;
+    $('cart-empty').hidden = rows.length > 0;
+    $('clear-cart').hidden = rows.length === 0;
+    $('cart-items').innerHTML = rows.map(({key, entry, family}) => {
+      const item = family.items[entry.index];
+      const photo = item.image || family.image;
+      const thumb = photo ? productImage(photo, item.image ? item.sprite : family.sprite, `Imagen de ${item.name}`) : '';
+      return `<article class="cart-line" data-cart-key="${esc(key)}"><div class="cart-line-photo">${thumb}</div><div class="cart-line-info"><div class="cart-line-meta"><small>${esc(categoryLabel(family.category))}</small>${brandMark(item.brand, 'cart-brand')}</div><h3>${esc(displayName(item))}</h3><div class="cart-line-actions"><div class="cart-quantity" aria-label="Cantidad de ${esc(item.name)}"><button type="button" data-cart-action="decrease" aria-label="Quitar una unidad de ${esc(item.name)}">−</button><output>${entry.quantity}</output><button type="button" data-cart-action="increase" aria-label="Agregar una unidad de ${esc(item.name)}">+</button></div><button class="cart-remove" type="button" data-cart-action="remove" aria-label="Quitar ${esc(item.name)} de la lista">Quitar</button></div></div></article>`;
+    }).join('');
+    const send = $('cart-whatsapp');
+    send.setAttribute('aria-disabled', String(!rows.length));
+    send.tabIndex = rows.length ? 0 : -1;
+    const message = `Hola, quisiera consultar disponibilidad y precio de estos productos de Ferretería Oskar:\n\n${rows.map(({entry, family}, index) => `${index + 1}. ${family.items[entry.index].name} — ${entry.quantity} ${entry.quantity === 1 ? 'unidad' : 'unidades'}`).join('\n')}\n\nGracias.`;
+    send.href = rows.length ? `https://wa.me/${businessWhatsapp}?text=${encodeURIComponent(message)}` : '#';
+  }
+  function addToCart(family, index) {
+    const key = cartId(family.id, index);
+    const existing = cart.get(key);
+    if (existing && existing.quantity >= 99) { notify('Puedes consultar hasta 99 unidades por producto.'); return; }
+    cart.set(key, {familyId:family.id, index, quantity:(existing?.quantity || 0) + 1});
+    saveCart(); renderCart();
+    notify('Producto agregado a tu lista de consulta.');
+  }
+  function openCart() {
+    if ($('family-dialog').open) $('family-dialog').close();
+    $('cart-dialog').showModal();
   }
   function makeCategoryCards() {
     $('category-grid').innerHTML = cats.map((cat, index) => {
@@ -134,7 +190,9 @@
     $('variant-list').innerHTML = list.length ? list.map(item => {
       const safeFamilyImage = f.image && (!f.imageBrand || item.brand === f.imageBrand);
       const illustration = item.image ? `<figure class="variant-photo">${productImage(item.image, item.sprite, item.name)}${brandMark(item.brand)}<figcaption>${esc(item.imageKind || 'Imagen referencial')}</figcaption></figure>` : safeFamilyImage ? `<figure class="variant-photo">${productImage(f.image, f.sprite, `Imagen de la familia ${f.name}`)}${f.imageBrand === item.brand ? brandMark(item.brand) : ''}<figcaption>Imagen referencial; el modelo puede ser diferente</figcaption></figure>` : '';
-      return `<details><summary><span>${esc(displayName(item))}</span>${brandMark(item.brand, 'variant-brand')}</summary><div class="variant-detail">${illustration}<div><p>${esc(item.description || 'Consulta las características de esta variante.')}</p><button class="copy-variant" type="button" data-variant="${f.items.indexOf(item)}">Copiar consulta ↗</button></div></div></details>`;
+      const index = f.items.indexOf(item);
+      const added = cart.has(cartId(f.id, index));
+      return `<details><summary><span>${esc(displayName(item))}</span>${brandMark(item.brand, 'variant-brand')}</summary><div class="variant-detail">${illustration}<div><p>${esc(item.description || 'Consulta las características de esta variante.')}</p><button class="add-variant" type="button" data-variant="${index}">${added ? 'Agregar otra unidad' : 'Agregar a mi lista'} <span aria-hidden="true">＋</span></button></div></div></details>`;
     }).join('') : '<div class="variant-empty">No hay medidas o modelos que coincidan en esta familia.</div>';
   }
   function openFamily(id) {
@@ -179,16 +237,34 @@
   $('load-more').addEventListener('click', () => { state.limit += 24; render(); });
   $('close-dialog').addEventListener('click', () => $('family-dialog').close());
   $('family-dialog').addEventListener('click', event => { if (event.target === $('family-dialog')) $('family-dialog').close(); });
+  $('open-cart').addEventListener('click', openCart);
+  $('open-cart-from-family').addEventListener('click', openCart);
+  $('close-cart').addEventListener('click', () => $('cart-dialog').close());
+  $('cart-dialog').addEventListener('click', event => { if (event.target === $('cart-dialog')) $('cart-dialog').close(); });
+  $('cart-explore').addEventListener('click', () => { $('cart-dialog').close(); $('catalog-search').focus(); });
+  $('clear-cart').addEventListener('click', () => { cart.clear(); saveCart(); renderCart(); notify('Tu lista de consulta quedó vacía.'); });
+  $('cart-items').addEventListener('click', event => {
+    const button = event.target.closest('[data-cart-action]');
+    const line = button?.closest('[data-cart-key]');
+    if (!button || !line) return;
+    const entry = cart.get(line.dataset.cartKey);
+    if (!entry) return;
+    if (button.dataset.cartAction === 'remove' || (button.dataset.cartAction === 'decrease' && entry.quantity === 1)) cart.delete(line.dataset.cartKey);
+    else if (button.dataset.cartAction === 'increase') entry.quantity = Math.min(99, entry.quantity + 1);
+    else if (button.dataset.cartAction === 'decrease') entry.quantity--;
+    saveCart(); renderCart();
+  });
+  $('cart-whatsapp').addEventListener('click', event => { if (!cart.size) event.preventDefault(); });
   $('variant-search').addEventListener('input', renderVariants);
-  $('variant-list').addEventListener('click', async event => {
+  $('variant-list').addEventListener('click', event => {
     const button = event.target.closest('[data-variant]');
     if (!button || !state.current) return;
-    const item = state.current.items[Number(button.dataset.variant)];
-    if (!item) return;
-    const message = `Hola, vi en el catálogo de Ferretería Oskar el producto “${item.name}”. ¿Me pueden confirmar disponibilidad, precio y características? Gracias.`;
-    try { await navigator.clipboard.writeText(message); notify('Consulta copiada. Abre WhatsApp y pégala en el chat.'); }
-    catch { notify('No se pudo copiar automáticamente. Puedes escribir el nombre del producto en WhatsApp.'); }
+    const index = Number(button.dataset.variant);
+    if (!state.current.items[index]) return;
+    addToCart(state.current, index);
+    button.innerHTML = 'Agregar otra unidad <span aria-hidden="true">＋</span>';
   });
   $('hero-count').textContent = data.rowCount.toLocaleString('es-CL');
+  renderCart();
   render();
 })();
