@@ -92,6 +92,7 @@
     const units = rows.reduce((total, row) => total + row.entry.quantity, 0);
     $('cart-count').textContent = units;
     $('dialog-cart-count').textContent = units;
+    $('cart-toggle-text').textContent = units ? 'Revisar y consultar' : 'Mi lista';
     $('open-cart').setAttribute('aria-label', `Ver mi lista de consulta, ${plural(units, 'producto', 'productos')}`);
     $('cart-summary').textContent = `${plural(rows.length, 'producto', 'productos')} · ${plural(units, 'unidad', 'unidades')}`;
     $('cart-empty').hidden = rows.length > 0;
@@ -114,7 +115,7 @@
     if (existing && existing.quantity >= 99) { notify('Puedes consultar hasta 99 unidades por producto.'); return; }
     cart.set(key, {familyId:family.id, index, quantity:(existing?.quantity || 0) + 1});
     saveCart(); renderCart();
-    notify('Producto agregado a tu lista de consulta.');
+    notify('Agregado a tu lista. Pulsa «Revisar y consultar» para ir a WhatsApp.');
   }
   function openCart() {
     if ($('family-dialog').open) $('family-dialog').close();
@@ -153,15 +154,16 @@
     return filtered;
   }
   function visual(f) {
-    const unanimousBrand = f.items.length && f.items.every(item => item.brand && item.brand === f.items[0].brand) ? f.items[0].brand : '';
-    const logo = brandMark(unanimousBrand && (!f.imageBrand || f.imageBrand === unanimousBrand) ? unanimousBrand : '');
-    if (f.image) return `<div class="family-visual">${productImage(f.image, f.sprite, `Imagen de ${f.name}`)}${logo}<span class="photo-kind" title="${esc(f.imageKind || 'Imagen referencial')}">Imagen referencial</span></div>`;
-    return `<div class="family-visual no-photo"><span aria-hidden="true">${esc(f.name.charAt(0))}</span>${logo}</div>`;
+    if (f.image) return `<div class="family-visual">${productImage(f.image, f.sprite, `Imagen de ${f.name}`)}<span class="photo-kind" title="${esc(f.imageKind || 'Imagen referencial')}">${f.imageKind === 'Fotografía del producto' ? 'Foto del producto' : 'Imagen referencial'}</span></div>`;
+    return `<div class="family-visual no-photo"><span aria-hidden="true">${esc(f.name.charAt(0))}</span></div>`;
   }
   function card(f) {
     const matching = state.query ? f.items.filter(i => plain([i.name,i.description].join(' ')).includes(plain(state.query))).slice(0,2) : [];
     const subtitle = matching.length ? matching.map(displayName).join(' · ') : f.items.length === 1 ? f.description : `Explora las ${f.items.length} variantes de esta familia y consulta sus medidas y características.`;
-    return `<article class="family-card">${visual(f)}<div class="family-body"><small>${esc(categoryLabel(f.category))}</small><h3>${esc(f.name)}</h3><p>${esc(subtitle)}</p><div class="family-bottom"><span>${plural(f.items.length, 'modelo o medida', 'modelos y medidas')}</span><span aria-hidden="true">↗</span></div></div><button type="button" class="family-open" data-family="${esc(f.id)}" aria-label="Ver modelos y medidas de ${esc(f.name)}">Ver detalle</button></article>`;
+    const unanimousBrand = f.items.length && f.items.every(item => item.brand && item.brand === f.items[0].brand) ? f.items[0].brand : '';
+    const familyBrand = brandMark(unanimousBrand && (!f.imageBrand || f.imageBrand === unanimousBrand) ? unanimousBrand : '');
+    const quickAdd = f.items.length === 1 ? `<button type="button" class="family-quick-add" data-quick-add="${esc(f.id)}" aria-label="Agregar ${esc(f.items[0].name)} a mi lista">Agregar a mi lista <span aria-hidden="true">＋</span></button>` : '';
+    return `<article class="family-card">${visual(f)}<div class="family-body"><div class="family-meta"><small>${esc(categoryLabel(f.category))}</small>${familyBrand}</div><h3>${esc(f.name)}</h3><p>${esc(subtitle)}</p>${quickAdd}<div class="family-bottom"><span>${plural(f.items.length, 'modelo o medida', 'modelos y medidas')}</span><span aria-hidden="true">↗</span></div></div><button type="button" class="family-open" data-family="${esc(f.id)}" aria-label="Ver modelos y medidas de ${esc(f.name)}">Ver detalle</button></article>`;
   }
   function render() {
     makeCategoryCards();
@@ -189,10 +191,10 @@
     const list = f.items.filter(i => terms.every(t => plain(i.name + ' ' + i.description).includes(t)));
     $('variant-list').innerHTML = list.length ? list.map(item => {
       const safeFamilyImage = f.image && (!f.imageBrand || item.brand === f.imageBrand);
-      const illustration = item.image ? `<figure class="variant-photo">${productImage(item.image, item.sprite, item.name)}${brandMark(item.brand)}<figcaption>${esc(item.imageKind || 'Imagen referencial')}</figcaption></figure>` : safeFamilyImage ? `<figure class="variant-photo">${productImage(f.image, f.sprite, `Imagen de la familia ${f.name}`)}${f.imageBrand === item.brand ? brandMark(item.brand) : ''}<figcaption>Imagen referencial; el modelo puede ser diferente</figcaption></figure>` : '';
+      const illustration = item.image ? `<figure class="variant-photo">${productImage(item.image, item.sprite, item.name)}<figcaption>${esc(item.imageKind || 'Imagen referencial')}</figcaption></figure>` : safeFamilyImage ? `<figure class="variant-photo">${productImage(f.image, f.sprite, `Imagen de la familia ${f.name}`)}<figcaption>Imagen referencial; el modelo puede ser diferente</figcaption></figure>` : '';
       const index = f.items.indexOf(item);
       const added = cart.has(cartId(f.id, index));
-      return `<details><summary><span>${esc(displayName(item))}</span>${brandMark(item.brand, 'variant-brand')}</summary><div class="variant-detail">${illustration}<div><p>${esc(item.description || 'Consulta las características de esta variante.')}</p><button class="add-variant" type="button" data-variant="${index}">${added ? 'Agregar otra unidad' : 'Agregar a mi lista'} <span aria-hidden="true">＋</span></button></div></div></details>`;
+      return `<details><summary><span class="variant-name">${esc(displayName(item))}</span>${brandMark(item.brand, 'variant-brand')}<button class="add-variant variant-quick-add" type="button" data-variant="${index}" aria-label="Agregar ${esc(item.name)} a mi lista">${added ? 'Agregar otra' : 'Agregar a mi lista'} <span aria-hidden="true">＋</span></button></summary><div class="variant-detail">${illustration}<div><p>${esc(item.description || 'Consulta las características de esta variante.')}</p></div></div></details>`;
     }).join('') : '<div class="variant-empty">No hay medidas o modelos que coincidan en esta familia.</div>';
   }
   function openFamily(id) {
@@ -204,7 +206,8 @@
     $('dialog-description').textContent = f.items.length === 1 ? f.description : `Explora las ${f.items.length} variantes de esta familia. Abre cada modelo o medida para leer su descripción.`;
     $('dialog-variant-total').textContent = plural(f.items.length, 'referencia disponible en el listado', 'referencias disponibles en el listado');
     const unanimousBrand = f.items.length && f.items.every(item => item.brand && item.brand === f.items[0].brand) ? f.items[0].brand : '';
-    $('dialog-image').innerHTML = f.image ? `${productImage(f.image, f.sprite, `Imagen de ${f.name}`, false)}${brandMark(unanimousBrand && (!f.imageBrand || f.imageBrand === unanimousBrand) ? unanimousBrand : '')}` : `<span class="placeholder" aria-hidden="true">${esc(f.name.charAt(0))}</span>`;
+    $('dialog-image').innerHTML = f.image ? productImage(f.image, f.sprite, `Imagen de ${f.name}`, false) : `<span class="placeholder" aria-hidden="true">${esc(f.name.charAt(0))}</span>`;
+    $('dialog-brand').innerHTML = brandMark(unanimousBrand);
     $('variant-search').value = '';
     renderVariants();
     $('family-dialog').showModal();
@@ -224,6 +227,12 @@
     state.subcategory = button.dataset.subcategory; state.limit = 24; render();
   });
   $('family-grid').addEventListener('click', event => {
+    const quickAdd = event.target.closest('[data-quick-add]');
+    if (quickAdd) {
+      const family = familyById.get(quickAdd.dataset.quickAdd);
+      if (family?.items.length === 1) addToCart(family, 0);
+      return;
+    }
     const button = event.target.closest('[data-family]');
     if (button) openFamily(button.dataset.family);
   });
@@ -259,10 +268,12 @@
   $('variant-list').addEventListener('click', event => {
     const button = event.target.closest('[data-variant]');
     if (!button || !state.current) return;
+    event.preventDefault();
+    event.stopPropagation();
     const index = Number(button.dataset.variant);
     if (!state.current.items[index]) return;
     addToCart(state.current, index);
-    button.innerHTML = 'Agregar otra unidad <span aria-hidden="true">＋</span>';
+    button.innerHTML = 'Agregar otra <span aria-hidden="true">＋</span>';
   });
   $('hero-count').textContent = data.rowCount.toLocaleString('es-CL');
   renderCart();

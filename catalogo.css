@@ -58,6 +58,21 @@
 .cart-brand img{width:100%;height:100%;object-fit:contain}
 .cart-brand[data-brand="TOTAL"]{background:#075f67;border-color:#075f67}
 .cart-brand[data-brand="SATA"],.cart-brand[data-brand="WESCO"]{background:#102b46;border-color:#102b46}
+/* Acceso directo a la lista desde las fichas y las filas de variantes. */
+.family-quick-add{position:relative;z-index:2;align-self:flex-start;display:inline-flex;align-items:center;gap:8px;margin:0 0 17px;padding:10px 12px;border:0;background:var(--navy);color:#fff;font-size:11px;font-weight:800}
+.family-meta{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:30px}.family-meta small{color:var(--blue);font-size:10px;font-weight:800;letter-spacing:.1em;text-transform:uppercase}.family-meta .brand-badge{position:static;flex:0 0 auto}
+.family-quick-add span{color:var(--yellow);font-size:17px;line-height:1}
+.family-quick-add:hover,.family-quick-add:focus-visible{background:var(--blue)}
+.variant-list summary{align-items:center;flex-wrap:wrap;padding:9px 12px;gap:8px}
+.variant-list summary .variant-name{flex:1 1 170px}
+.variant-list summary .variant-brand{margin:0}
+.variant-list summary:after{order:4;flex:0 0 auto}
+.variant-quick-add{flex:0 0 auto;padding:8px 10px;font-size:11px;gap:6px}
+.dialog-heading{display:flex;align-items:start;justify-content:space-between;gap:10px;margin-bottom:10px}
+.dialog-heading .eyebrow{margin:0;line-height:1.5}
+.dialog-heading #dialog-brand{display:inline-flex;flex:0 0 auto}
+.dialog-heading .brand-badge{position:static}
+@media(max-width:520px){.variant-list summary .variant-name{flex-basis:100%}.variant-quick-add{margin-left:auto}.dialog-heading{flex-wrap:wrap}}
 .cart-line h3{font:700 20px/1.08 'Barlow Condensed',sans-serif;margin:0 0 12px;overflow-wrap:anywhere}
 .cart-line-actions{display:flex;align-items:center;justify-content:space-between;gap:10px}
 .cart-quantity{display:inline-flex;align-items:center;height:30px;border:1px solid #cfd6d9;background:#fff}
